@@ -162,14 +162,17 @@ def process_log_data(spark, input_data, output_data):
     # write time table to parquet files partitioned by year and month
     time_table.write.partitionBy("year", "month").parquet(os.path.join(output_data, "time"), mode='overwrite')
 
-    # read in song data to use for songplays table
+   # read in song data to use for songplays table
+    song_data = os.path.join(input_data, 'song_data/A/A/A/*.json')
     song_df = spark.read.json(song_data)
     song_df.createOrReplaceTempView("songs_data")
 
-    # extract columns from joined song and log datasets to create songplays table 
+    # extract columns from joined song and log datasets to create songplays table
     songplays_table = spark.sql("""
                     select distinct
                     from_unixtime(ts/1000, "hh:mm:ss") as start_time,
+                    year(from_unixtime(ts/1000, "yyyy-MM-dd")) as year,
+                    month(from_unixtime(ts/1000, "yyyy-MM-dd")) as month,
                     cast(sev.userid as int) as id,
                     sev.level,
                     son.song_id ,
@@ -178,11 +181,11 @@ def process_log_data(spark, input_data, output_data):
                     sev.location,
                     sev.useragent
                     from log_data sev
-                    left join songs_data son 
-                    on sev.artist = son.artist_name 
+                    left join songs_data son
+                    on sev.artist = son.artist_name
                         and sev.length = son.duration
                         and sev.song = son.title
-                    where sev.userid != '' 
+                    where sev.userid != ''
                         and sev.page = 'NextSong'
                     """)
 

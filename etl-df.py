@@ -151,6 +151,7 @@ def process_log_data(spark, input_data, output_data):
     time_table.write.partitionBy("year", "month").parquet(os.path.join(output_data, "time"), mode='overwrite')
 
     # read in song data to use for songplays table
+    song_data = os.path.join(input_data, 'song_data/A/A/A/*.json')
     song_df = spark.read.json(song_data)
 
     # extract columns from joined song and log datasets to create songplays table 
@@ -160,6 +161,8 @@ def process_log_data(spark, input_data, output_data):
         .select(
         col('userId').alias('id'),
         date_format('datetime','hh:mm:ss').alias('start_time'),
+        year('datetime').alias('year'),
+        month('datetime').alias('month'),
         'level', 'song_id', 'artist_id', 'sessionId', 'location', 'useragent')
     
     
